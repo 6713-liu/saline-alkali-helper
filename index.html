@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黄骅滨海盐碱地作物选配助手</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
+        body{background:#f0f7f0;padding:20px;max-width:900px;margin:0 auto;}
+        .container{background:#fff;border-radius:14px;padding:24px;box-shadow:0 2px 12px #00000015;}
+        h1{color:#2c6e35;text-align:center;margin-bottom:20px;font-size:22px;}
+        .desc{color:#555;margin-bottom:24px;text-align:center;}
+        .form-item{margin-bottom:16px;}
+        label{display:block;margin-bottom:6px;font-weight:500;color:#333;}
+        input,select,textarea{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:15px;}
+        button{width:100%;padding:12px;background:#3b8c46;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin-top:8px;}
+        button:disabled{background:#99c49f;cursor:not-allowed;}
+        #result{margin-top:20px;padding:16px;background:#f6fbf6;border-radius:8px;white-space:pre-line;min-height:120px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>黄骅滨海盐碱地作物选配助手</h1>
+        <div class="desc">输入地块盐碱情况，查询适合/不适合种植的作物，给农户生产决策参考</div>
+        <div class="form-item">
+            <label>土壤盐度等级</label>
+            <select id="salt">
+                <option value="轻度盐碱地">轻度盐碱地</option>
+                <option value="中度盐碱地">中度盐碱地</option>
+                <option value="重度盐碱地">重度盐碱地</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>地块位置（沧州黄骅附近）</label>
+            <input id="location" placeholder="例如：南大港、羊三木等" value="黄骅滨海区域">
+        </div>
+        <div class="form-item">
+            <label>补充说明（可选）</label>
+            <textarea id="extra" rows="3" placeholder="灌溉条件、想要种什么类型作物等"></textarea>
+        </div>
+        <button id="sendBtn">查询种植建议</button>
+        <div id="result"></div>
+    </div>
+
+<script>
+// =========这里改成你的函数公网地址=========
+const API_URL = "https://saline-t-helper-imlqxrmcaa-cn-hangzhou.fcapp.run";
+// ========================================
+
+const sendBtn = document.getElementById('sendBtn');
+const resultDom = document.getElementById('result');
+
+sendBtn.onclick = async ()=>{
+    sendBtn.disabled=true;
+    resultDom.innerText="正在查询，请稍候...";
+    const salt = document.getElementById('salt').value;
+    const loc = document.getElementById('location').value;
+    const extra = document.getElementById('extra').value;
+
+    const prompt = `你是黄骅滨海盐碱地种植决策助手，只基于上传的盐碱地标准、文献资料回答。告诉农户：这块地适合种什么、不适合种什么，给出简单的种植建议。
+地块信息：盐度${salt}，位置${loc}，补充：${extra}
+要求：语言通俗，面向农户，不要复杂学术术语。`
+    try{
+        const res = await fetch(API_URL,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                messages: [{"role":"user","content":prompt}]
+            })
+        })
+        const data = await res.json();
+        if(data.output && data.output.choices){
+            resultDom.innerText = data.output.choices[0].message.content;
+        }else{
+            resultDom.innerText = JSON.stringify(data,null,2);
+        }
+    }catch(e){
+        resultDom.innerText = "请求失败："+e.message;
+    }
+    sendBtn.disabled=false;
+}
+</script>
+</body>
+</html>
